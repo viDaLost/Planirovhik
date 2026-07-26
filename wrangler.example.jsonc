@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "planirov",
+  "account_id": "<CLOUDFLARE_ACCOUNT_ID>",
+  "compatibility_date": "2026-07-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "worker/index.ts",
+  "assets": {
+    "directory": "dist/client",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "planirov",
+      "database_id": "<D1_DATABASE_ID>",
+      "migrations_dir": "drizzle"
+    }
+  ]
+}

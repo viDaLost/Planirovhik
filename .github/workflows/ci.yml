@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: GitHub Pages build
+        run: PAGES_BASE_PATH=/planirov-ci/ npm run build:pages
+
+      - name: GitHub Pages artifact test
+        run: npm run test:pages
+
+      - name: Production build
+        run: npm run build
+
+      - name: Rendered Worker test
+        run: node --import ./scripts/register-cloudflare-loader.mjs --test tests/rendered-html.test.mjs

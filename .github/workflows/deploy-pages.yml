@@ -1,0 +1,70 @@
+name: "1 — Опубликовать GitHub Pages"
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Получить проект
+        uses: actions/checkout@v7
+
+      - name: Подготовить Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Настроить GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
+      - name: Установить зависимости
+        run: npm ci
+
+      - name: Проверить код
+        run: |
+          npm run lint
+          npm run typecheck
+          npm run test:unit
+
+      - name: Собрать автономное приложение
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
+        run: npm run build:pages
+
+      - name: Проверить готовый сайт
+        run: npm run test:pages
+
+      - name: Загрузить Pages-артефакт
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist-pages
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Опубликовать
+        id: deployment
+        uses: actions/deploy-pages@v5
